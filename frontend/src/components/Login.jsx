@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./SignUp.css"; // reuse your styles or customize
+import "./SignUp.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -30,9 +30,15 @@ const Login = () => {
         password,
       });
 
-      setMessage("Login successful!");
+      setMessage("✅ Login successful!");
 
+      // Store token in localStorage
       localStorage.setItem("token", res.data.token);
+
+      // Optional: store role or user info if your backend sends it
+      if (res.data.role) {
+        localStorage.setItem("role", res.data.role);
+      }
 
       setTimeout(() => {
         navigate("/home");
@@ -82,7 +88,6 @@ const Login = () => {
           />
         </div>
 
-        {/* Forgot Password link just below password field */}
         <div style={{ textAlign: "right", marginBottom: "1rem" }}>
           <button
             type="button"

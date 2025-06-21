@@ -25,7 +25,6 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Generate 6-digit OTP and expiry 10 min
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = Date.now() + 10 * 60 * 1000;
 
@@ -40,7 +39,6 @@ exports.register = async (req, res) => {
 
     await user.save();
 
-    // Send OTP email using template
     const message = registrationOTP(otpCode);
     await sendEmail(user.email, "Verify your email for Bookshelf", message);
 
@@ -60,7 +58,6 @@ exports.verifyOtp = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-
     if (!user) return res.status(400).json({ message: "User not found" });
 
     if (user.isVerified)
@@ -109,7 +106,6 @@ exports.login = async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    // Send welcome email asynchronously
     const welcomeHtml = welcomeMessage(user.name);
 
     sendEmail(user.email, "Welcome to Bookshelf", welcomeHtml)
@@ -123,11 +119,11 @@ exports.login = async (req, res) => {
 
     res.json({
       token,
+      role: user.role, // ✅ easy frontend access
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
-        role: user.role,
       },
     });
   } catch (err) {
@@ -147,16 +143,14 @@ exports.forgotPassword = async (req, res) => {
         .status(400)
         .json({ message: "User with this email not found" });
 
-    // Generate OTP and expiry for reset password
     const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const resetOtpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const resetOtpExpires = Date.now() + 10 * 60 * 1000;
 
     user.resetPasswordOtp = resetOtp;
     user.resetPasswordOtpExpires = resetOtpExpires;
 
     await user.save();
 
-    // Send OTP email
     const message = forgotPassword(resetOtp);
     await sendEmail(user.email, "Reset Your Password - Bookshelf", message);
 
@@ -167,7 +161,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// Reset password - verify OTP and update password + send confirmation email
+// Reset password - verify OTP and update password
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
 
@@ -193,7 +187,6 @@ exports.resetPassword = async (req, res) => {
 
     await user.save();
 
-    // Send confirmation email
     const confirmationHtml = resetPasswordConfirmation(user.name || "");
     await sendEmail(user.email, "Password Reset Successful", confirmationHtml);
 
